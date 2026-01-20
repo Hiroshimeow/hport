@@ -1,7 +1,6 @@
 #!/bin/bash
-
 # ==============================================================================
-# HPORT INTERACTIVE LAUNCHER (Ubuntu)
+# HPORT INTERACTIVE LAUNCHER (Linux/Ubuntu)
 # ==============================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -12,7 +11,8 @@ red() { echo -e "\033[31m$1\033[0m"; }
 yellow() { echo -e "\033[33m$1\033[0m"; }
 bold() { echo -e "\033[1m$1\033[0m"; }
 
-trap "echo -e '\n\n🛑 Đã dừng script.'; exit 0" SIGINT
+# Handle Ctrl+C gracefully
+trap "echo -e '\n\n🛑 Script stopped.'; exit 0" SIGINT
 
 clear
 echo "╭────────────────────────────────────────────────────────╮"
@@ -20,11 +20,11 @@ echo "│         H - P O R T   L A U N C H E R  🚀              │"
 echo "╰────────────────────────────────────────────────────────╯"
 echo ""
 
-# 1. Nhập IP và Port
-bold "👉 Nhập mục tiêu (Format: IP:PORT hoặc PORT)"
-echo "   - Ví dụ: 192.168.1.10:8080"
-echo "   - Ví dụ: 53217 (Mặc định là 127.0.0.1:53217)"
-echo "   - Enter để dùng mặc định: 127.0.0.1:8080"
+# 1. Input Target (IP and Port)
+bold "👉 Enter Target (Format: IP:PORT or PORT)"
+echo "   - Example: 192.168.1.10:8080"
+echo "   - Example: 53217 (Default: 127.0.0.1:53217)"
+echo "   - Press Enter for default: 127.0.0.1:8080"
 read -p "🎯 Target: " INPUT_RAW
 
 TARGET="127.0.0.1:8080"
@@ -32,12 +32,12 @@ if [ ! -z "$INPUT_RAW" ]; then
     TARGET="$INPUT_RAW"
 fi
 
-# 2. Nhập Subdomain
+# 2. Input Subdomain
 echo ""
-bold "👉 Nhập Subdomain (Enter để tạo ngẫu nhiên)"
+bold "👉 Enter Subdomain (Press Enter for random)"
 read -p "📝 Subdomain: " INPUT_SUBDOMAIN
 
-# 3. Thực thi
+# 3. Execute
 echo ""
 if [ ! -z "$INPUT_SUBDOMAIN" ]; then
     node "$HPORT_EXEC" "$TARGET" -s "$INPUT_SUBDOMAIN"
