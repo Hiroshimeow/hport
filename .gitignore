@@ -1,10 +1,19 @@
+# Dependencies
 node_modules/
-dist/
-UPDATE.md
-npm_secrets.txt
+/dist
+
+# Secrets & Credentials
 .env
-*.log
+npm_secrets.txt
 npm-debug.log*
+yarn-error.log*
 .cloudflared/
-package-lock.json
+
+# IDE & OS files
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
+
+# Project specific
+server/wrangler.toml.bak

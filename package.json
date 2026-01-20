@@ -1,19 +1,23 @@
 {
   "name": "hport-tunnel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Securely expose localhost to the internet via H-Lab Cloud Edge",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "hport": "dist/index.js",
-    "hcu": "dist/index.js"
+    "hport": "dist/index.js"
   },
   "scripts": {
     "build": "ncc build index.js -o dist --minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "tunnel",
+    "localhost",
+    "cloudflare",
+    "h-lab"
+  ],
+  "author": "H-Lab",
   "license": "ISC",
   "files": [
     "dist/",

@@ -1,0 +1,15 @@
+# Ignore source files
+index.js
+server/
+GUIDE.md
+UPDATE.md
+npm_secrets.txt
+
+# Keep dist for users
+!dist/
+
+# Standard ignores
+node_modules/
+.env
+.github/
+*.log
