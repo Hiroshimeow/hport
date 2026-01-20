@@ -1,0 +1,10 @@
+node_modules/
+dist/
+UPDATE.md
+npm_secrets.txt
+.env
+*.log
+npm-debug.log*
+.cloudflared/
+package-lock.json
+.DS_Store

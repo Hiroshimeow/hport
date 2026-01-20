@@ -1,0 +1,35 @@
+{
+  "name": "hport-tunnel",
+  "version": "1.0.0",
+  "description": "Securely expose localhost to the internet via H-Lab Cloud Edge",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "hport": "dist/index.js",
+    "hcu": "dist/index.js"
+  },
+  "scripts": {
+    "build": "ncc build index.js -o dist --minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "files": [
+    "dist/",
+    "hport.sh",
+    "hport.bat",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.2",
+    "ora": "^5.4.1",
+    "unique-names-generator": "^4.7.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.4"
+  }
+}
