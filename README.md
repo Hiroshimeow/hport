@@ -1,30 +1,25 @@
 # 🚀 H-PORT Tunnel
 
-**H-PORT** is a powerful, lightweight localhost tunneling tool that creates secure HTTP/HTTPS connections from your local machine to the public internet using a custom domain (`hcu-lab.me`). 
-
-Perfect for sharing local development, testing webhooks, or mobile debugging without the hassle of server configuration.
-
----
+**H-PORT** is a lightweight tunneling tool that securely exposes your localhost to the internet via `hcu-lab.me`. It uses Cloudflare's edge network to provide instant, secure public URLs for your local development.
 
 ## ✨ Features
-- 🛡️ **Secure Connections**: Automatic HTTPS via Cloudflare Edge.
-- 🔗 **Custom Subdomains**: Choose your own subdomain or get a random one.
-- 🧹 **Auto-Cleanup**: Automatically releases DNS records and tunnels on exit.
-- 🚀 **Zero Config**: No complex setup required on the client side.
-- 📦 **Standalone Binary**: Packaged for high performance and portability.
+- 🛡️ **Secure**: Built-in protection against token leakage in logs.
+- 🔗 **Instant URL**: Get a `*.hcu-lab.me` address in seconds.
+- 🧹 **Auto-Cleanup**: Automatically releases DNS records when you stop the tool.
+- 🚀 **Zero Config**: No complex setup required.
 
 ## 💻 Installation
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) installed on your system.
+### 1. Prerequisites
+This tool requires **cloudflared** to be installed on your system.
+- [Download & Install cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/setup/)
 
-### Install via NPM
+### 2. Install via NPM
 ```bash
 npm install -g hport-tunnel
 ```
 
-## 🚀 Quick Start
+## 🚀 Usage
 
 Expose your local port 8080:
 ```bash
@@ -33,23 +28,16 @@ hport 8080
 
 Expose with a custom subdomain:
 ```bash
-hport 3000 -s myapp
+hport 3000 -s my-app
 ```
 
-Expose a specific local IP:
+Expose a specific local IP and port:
 ```bash
 hport 192.168.1.10:5000
 ```
 
-## 🛠️ Project Structure
-- `/dist`: Optimized standalone build.
-- `/server`: Backend logic running on Cloudflare Workers.
-- `hport.sh / hport.bat`: Convenient interactive launchers for Linux and Windows.
+## ⚠️ Security Notice
+If you are using version `1.0.0`, please update to `1.0.1` immediately to ensure your connection tokens are not leaked in terminal error logs.
 
 ## 📄 License
-This project is licensed under the **H-PORT Personal Use License**. 
-- ✅ Free for personal and educational use.
-- ❌ **NOT** allowed for commercial use or resale.
-
----
-Created with ❤️ by H-Lab | Powered by Cloudflare
+ISC
