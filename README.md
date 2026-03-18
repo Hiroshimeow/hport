@@ -6,6 +6,7 @@
 - 🛡️ **Secure**: Built-in protection against token leakage in logs.
 - 🔗 **Instant URL**: Get a `*.hcu-lab.me` address in seconds.
 - 🧹 **Auto-Cleanup**: Automatically releases DNS records when you stop the tool.
+- ♻️ **Safe Reuse**: If a custom subdomain already exists, H-PORT can confirm and overwrite the old DNS mapping for you.
 - 🚀 **Zero Config**: No complex setup required.
 
 ## 💻 Installation
@@ -29,6 +30,11 @@ hport 8080
 Expose with a custom subdomain:
 ```bash
 hport 3000 -s my-app
+```
+
+Reuse the same subdomain and auto-confirm overwrite:
+```bash
+hport 9993 -s abc -y
 ```
 
 Expose a specific local IP and port:
