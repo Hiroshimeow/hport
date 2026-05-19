@@ -1,12 +1,15 @@
 # 🚀 H-PORT Tunnel
 
-**H-PORT** is a lightweight tunneling tool that securely exposes your localhost to the internet via `hcu-lab.me`. It uses Cloudflare's edge network to provide instant, secure public URLs for your local development.
+**H-PORT** is a lightweight tunneling tool that securely exposes your localhost to the internet through your own Cloudflare-managed domain. It uses Cloudflare's edge network to provide instant, secure public URLs for local development.
 
 ## ✨ Features
 - 🛡️ **Secure**: Built-in protection against token leakage in logs.
-- 🔗 **Instant URL**: Get a `*.hcu-lab.me` address in seconds.
-- 🧹 **Auto-Cleanup**: Automatically releases DNS records when you stop the tool.
-- ♻️ **Safe Reuse**: If a custom subdomain already exists, H-PORT can confirm and overwrite the old DNS mapping for you.
+- 🔗 **Instant URL**: Get a `*.your-domain.tld` address in seconds.
+- 🧹 **Scoped Cleanup**: `Ctrl+C` only cleans up the current H-PORT-managed session resources.
+- 🔒 **Protected Names**: Reserved subdomains can be blocked from create, audit, and cleanup flows.
+- ♻️ **Managed Reuse Only**: Existing unmanaged DNS records are never overwritten by normal tunnel creation.
+- 📋 **Audit + Preview Cleanup**: The Worker can report managed orphans and `test*` / `*test` review candidates before any deletion.
+- ⏱️ **Background Mode**: Launch `cloudflared` detached with `--bg` when you want the tunnel to stay up after the terminal closes.
 - 🚀 **Zero Config**: No complex setup required.
 
 ## 💻 Installation
@@ -22,6 +25,11 @@ npm install -g hport-tunnel
 
 ## 🚀 Usage
 
+Set the backend your CLI should talk to if you deploy your own Worker:
+```bash
+export HPORT_BACKEND_URL=https://your-worker.example.workers.dev
+```
+
 Expose your local port 8080:
 ```bash
 hport 8080
@@ -32,7 +40,7 @@ Expose with a custom subdomain:
 hport 3000 -s my-app
 ```
 
-Reuse the same subdomain and auto-confirm overwrite:
+Reuse the same H-PORT-managed subdomain and auto-confirm replacement:
 ```bash
 hport 9993 -s abc -y
 ```
@@ -40,6 +48,11 @@ hport 9993 -s abc -y
 Expose a specific local IP and port:
 ```bash
 hport 192.168.1.10:5000
+```
+
+Run in background mode:
+```bash
+hport 8101 -s mcp --bg
 ```
 
 ## ⚠️ Security Notice

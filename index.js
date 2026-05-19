@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 
-import { program } from 'commander';
+import { Command } from 'commander';
 import { spawn } from 'child_process';
 import readline from 'readline';
 import chalk from 'chalk';
 import ora from 'ora';
 import axios from 'axios';
+import { pathToFileURL } from 'url';
 
-const BACKEND_URL = process.env.HPORT_BACKEND_URL || 'https://h-lab-api.haiduong8592.workers.dev';
-const VERSION = '1.1.0';
-const DNS_EXISTS_CODE = 'DNS_EXISTS';
+export const BACKEND_URL = process.env.HPORT_BACKEND_URL || 'https://h-lab-api.haiduong8592.workers.dev';
+export const VERSION = '1.1.0';
+export const DNS_EXISTS_CODE = 'DNS_EXISTS';
+const DISPLAY_DOMAIN = process.env.HPORT_PUBLIC_BASE_DOMAIN?.trim() || 'Cloudflare Tunnel';
 const BANNER_VERSION = `v${VERSION}`.padEnd(50);
 
-const UI = {
+export const UI = {
   divider() {
     console.log(chalk.gray('   ────────────────────────────────────────────────────────'));
   },
@@ -20,7 +22,7 @@ const UI = {
     console.log(chalk.cyan.bold(`
    ╭────────────────────────────────────────────────────────╮
    │  H-PORT Tunnel                                          │
-   │  Secure Localhost Exposure via hcu-lab.me               │
+   │  Secure Localhost Exposure via ${DISPLAY_DOMAIN.padEnd(21)}│
    │  ${BANNER_VERSION}│
    ╰────────────────────────────────────────────────────────╯`));
   },
@@ -33,41 +35,49 @@ const UI = {
   displayOverwritePrompt(subdomain, url) {
     console.log(`\n   ${chalk.yellow.bold('!')} ${chalk.white(`Subdomain ${chalk.cyan(subdomain)} is already in use.`)}`);
     console.log(`   ${chalk.gray('Current public URL:')} ${chalk.underline.cyan(url)}`);
-    console.log(`   ${chalk.gray('Action:')} ${chalk.white('Create a new tunnel and overwrite the existing DNS record.')}\n`);
+    console.log(`   ${chalk.gray('Action:')} ${chalk.white('Replace the existing H-PORT-managed mapping with a new tunnel.')}\n`);
   },
   displaySuccess(url, target, replacedExisting) {
-    console.log(`\n   ${chalk.green.bold('✔')} ${chalk.white(replacedExisting ? 'Tunnel is live and DNS was overwritten.' : 'Tunnel is live!')}`);
+    console.log(`\n   ${chalk.green.bold('✔')} ${chalk.white(replacedExisting ? 'Tunnel is live and the previous H-PORT mapping was replaced.' : 'Tunnel is live!')}`);
     console.log(`   ${chalk.white('Public URL ')} ${chalk.underline.cyan(url)}`);
     console.log(`   ${chalk.white('Forward to ')} ${chalk.cyan(`http://${target}`)}\n`);
     console.log(`   ${chalk.gray('Control:')} ${chalk.yellow('Ctrl + C to terminate and cleanup current tunnel')}\n`);
+  },
+  displayBackground(pid) {
+    console.log(chalk.gray(`   Background PID: ${pid || 'unknown'}`));
+    console.log(chalk.gray('   Note: detached mode will not auto-clean on terminal close; use audit/cleanup if you stop it externally.'));
   },
   displayError(msg) {
     console.error(`\n   ${chalk.red.bold('✖ Error:')} ${chalk.white(msg)}\n`);
   }
 };
 
-function checkCloudflared() {
+export function checkCloudflared(spawnProcess = spawn) {
   return new Promise((resolve) => {
-    const check = spawn('cloudflared', ['--version']);
+    const check = spawnProcess('cloudflared', ['--version']);
     check.on('error', () => resolve(false));
     check.on('close', (code) => resolve(code === 0));
   });
 }
 
-function normalizeTarget(target) {
+export function normalizeTarget(target) {
   return target.includes(':') ? target : `127.0.0.1:${target}`;
 }
 
-function createTunnelPayload(subdomain, overwrite) {
+export function createTunnelPayload(subdomain, overwrite) {
   return {
     overwrite,
     subdomain: subdomain?.trim() || undefined
   };
 }
 
-async function requestTunnel(subdomain, overwrite = false) {
-  const response = await axios.post(
-    `${BACKEND_URL}/create-tunnel`,
+export async function requestTunnel(
+  subdomain,
+  overwrite = false,
+  { backendUrl = BACKEND_URL, httpClient = axios } = {}
+) {
+  const response = await httpClient.post(
+    `${backendUrl}/create-tunnel`,
     createTunnelPayload(subdomain, overwrite)
   );
 
@@ -78,14 +88,17 @@ async function requestTunnel(subdomain, overwrite = false) {
   return response.data;
 }
 
-function askConfirmation(question) {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+export function askConfirmation(
+  question,
+  { stdin = process.stdin, stdout = process.stdout } = {}
+) {
+  if (!stdin.isTTY || !stdout.isTTY) {
     return Promise.resolve(false);
   }
 
   const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+    input: stdin,
+    output: stdout
   });
 
   return new Promise((resolve) => {
@@ -96,129 +109,175 @@ function askConfirmation(question) {
   });
 }
 
-function handleTunnelOutput(chunk, onReady) {
+export function handleTunnelOutput(chunk, onReady) {
   const msg = chunk.toString();
   if (msg.includes('Registered tunnel connection')) {
     onReady();
   }
 }
 
-program
-  .name('hport')
-  .description('Securely expose your localhost to the internet via hcu-lab.me')
-  .version(VERSION)
-  .argument('<target>', 'Target port or IP:PORT (e.g., 8080 or 192.168.1.10:8080)')
-  .option('-s, --subdomain <subdomain>', 'Custom subdomain')
-  .option('-y, --yes', 'Automatically confirm DNS overwrite when the subdomain already exists')
-  .action(async (target, options) => {
-    UI.displayBanner();
+export function createProgram({
+  backendUrl = BACKEND_URL,
+  httpClient = axios,
+  spawnProcess = spawn,
+  askUserConfirmation = askConfirmation,
+  ui = UI,
+  exitProcess = process.exit,
+  registerSignalHandler = process.on.bind(process),
+  removeSignalHandler = process.removeListener.bind(process)
+} = {}) {
+  return new Command()
+    .name('hport')
+    .description('Securely expose your localhost to the internet via Cloudflare Tunnel')
+    .version(VERSION)
+    .argument('<target>', 'Target port or IP:PORT (e.g., 8080 or 192.168.1.10:8080)')
+    .option('-s, --subdomain <subdomain>', 'Custom subdomain')
+    .option('-y, --yes', 'Automatically confirm reuse of an existing H-PORT-managed subdomain')
+    .option('-b, --bg', 'Run cloudflared in the background and return immediately')
+    .action(async (target, options) => {
+      ui.displayBanner();
 
-    const hasCloudflared = await checkCloudflared();
-    if (!hasCloudflared) {
-      UI.displayError('Cloudflared not found!');
-      console.log(chalk.yellow('   Please install cloudflared first:'));
-      console.log(chalk.gray('   - Windows/Mac/Linux: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/setup/'));
-      process.exit(1);
-    }
-
-    const finalTarget = normalizeTarget(target);
-    const requestedSubdomain = options.subdomain?.trim();
-    UI.displayTarget(finalTarget, requestedSubdomain);
-
-    const spinner = ora('Requesting secure tunnel...').start();
-    let tunnelInfo = null;
-
-    try {
-      try {
-        tunnelInfo = await requestTunnel(requestedSubdomain, false);
-      } catch (err) {
-        const conflictCode = err.response?.data?.code;
-        if (conflictCode !== DNS_EXISTS_CODE) {
-          throw err;
-        }
-
-        spinner.stop();
-        UI.displayOverwritePrompt(
-          err.response.data.subdomain,
-          err.response.data.url || `https://${err.response.data.subdomain}.hcu-lab.me`
-        );
-
-        const confirmed = options.yes || await askConfirmation(chalk.yellow('   Overwrite existing DNS and continue? [y/N]: '));
-        if (!confirmed) {
-          UI.displayError('Tunnel creation cancelled.');
-          process.exit(1);
-        }
-
-        spinner.start('Overwriting DNS and requesting secure tunnel...');
-        tunnelInfo = await requestTunnel(requestedSubdomain, true);
+      const hasCloudflared = await checkCloudflared(spawnProcess);
+      if (!hasCloudflared) {
+        ui.displayError('Cloudflared not found!');
+        console.log(chalk.yellow('   Please install cloudflared first:'));
+        console.log(chalk.gray('   - Windows/Mac/Linux: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/setup/'));
+        exitProcess(1);
+        return;
       }
-      
-      spinner.succeed('Tunnel authorized.');
 
-      const tunnelSpinner = ora('Connecting to H-Lab Edge...').start();
-      let isLive = false;
+      const finalTarget = normalizeTarget(target);
+      const requestedSubdomain = options.subdomain?.trim();
+      ui.displayTarget(finalTarget, requestedSubdomain);
 
-      // 3. Spawn cloudflared process SECURELY
-      const tunnelProcess = spawn('cloudflared', [
-        'tunnel', 'run', '--token', tunnelInfo.token, '--url', `http://${finalTarget}`
-      ]);
+      const spinner = ora('Requesting secure tunnel...').start();
+      let tunnelInfo = null;
 
-      // --- SECURITY FIX: PREVENT TOKEN LEAK ON ERROR ---
-      tunnelProcess.on('error', (err) => {
-        // CRITICAL: Delete arguments containing token before logging
-        if (err.spawnargs) err.spawnargs = ['[HIDDEN]']; 
-        if (err.args) err.args = ['[HIDDEN]'];
-        
-        tunnelSpinner.fail('Failed to start tunnel process.');
-        // Chỉ hiện message lỗi cơ bản, không hiện stack trace chứa tham số
-        UI.displayError(err.message);
-        process.exit(1);
-      });
-      // -------------------------------------------------
+      try {
+        try {
+          tunnelInfo = await requestTunnel(requestedSubdomain, false, { backendUrl, httpClient });
+        } catch (err) {
+          const conflictCode = err.response?.data?.code;
+          if (conflictCode !== DNS_EXISTS_CODE) {
+            throw err;
+          }
 
-      const markAsLive = () => {
-        if (!isLive) {
-          isLive = true;
-          tunnelSpinner.stop();
-          UI.displaySuccess(tunnelInfo.url, finalTarget, tunnelInfo.replacedExisting);
+          spinner.stop();
+          ui.displayOverwritePrompt(
+            err.response.data.subdomain,
+            err.response.data.url || `https://${err.response.data.subdomain}`
+          );
+
+          const confirmed = options.yes || await askUserConfirmation(
+            chalk.yellow('   Replace existing H-PORT mapping and continue? [y/N]: ')
+          );
+          if (!confirmed) {
+            ui.displayError('Tunnel creation cancelled.');
+            exitProcess(1);
+            return;
+          }
+
+          spinner.start('Overwriting DNS and requesting secure tunnel...');
+          tunnelInfo = await requestTunnel(requestedSubdomain, true, { backendUrl, httpClient });
         }
-      };
 
-      tunnelProcess.stderr.on('data', (data) => handleTunnelOutput(data, markAsLive));
-      tunnelProcess.stdout.on('data', (data) => handleTunnelOutput(data, markAsLive));
+        spinner.succeed('Tunnel authorized.');
 
-      let isCleaningUp = false;
-      const cleanup = async () => {
-        if (isCleaningUp) {
+        const tunnelSpinner = ora('Connecting to H-Lab Edge...').start();
+        let isLive = false;
+        const spawnOptions = options.bg
+          ? { detached: true, stdio: ['ignore', 'pipe', 'pipe'] }
+          : undefined;
+        const tunnelProcess = spawnProcess('cloudflared', [
+          'tunnel', 'run', '--token', tunnelInfo.token, '--url', `http://${finalTarget}`
+        ], spawnOptions);
+
+        tunnelProcess.on('error', (err) => {
+          if (err.spawnargs) err.spawnargs = ['[HIDDEN]'];
+          if (err.args) err.args = ['[HIDDEN]'];
+
+          tunnelSpinner.fail('Failed to start tunnel process.');
+          ui.displayError(err.message);
+          exitProcess(1);
+        });
+
+        const markAsLive = () => {
+          if (!isLive) {
+            isLive = true;
+            tunnelSpinner.stop();
+            ui.displaySuccess(tunnelInfo.url, finalTarget, tunnelInfo.replacedExisting);
+
+            if (options.bg) {
+              if (typeof tunnelProcess.stdout?.destroy === 'function') {
+                tunnelProcess.stdout.destroy();
+              }
+              if (typeof tunnelProcess.stderr?.destroy === 'function') {
+                tunnelProcess.stderr.destroy();
+              }
+              if (typeof tunnelProcess.unref === 'function') {
+                tunnelProcess.unref();
+              }
+              ui.displayBackground(tunnelProcess.pid);
+              exitProcess(0);
+            }
+          }
+        };
+
+        tunnelProcess.stderr?.on('data', (data) => handleTunnelOutput(data, markAsLive));
+        tunnelProcess.stdout?.on('data', (data) => handleTunnelOutput(data, markAsLive));
+
+        if (options.bg) {
           return;
         }
 
-        isCleaningUp = true;
-        console.log(chalk.yellow('\n\n   Cleaning up connection...'));
-        tunnelProcess.kill();
-
-        if (tunnelInfo) {
-          try {
-            await axios.delete(`${BACKEND_URL}/cleanup`, {
-              data: { tunnelId: tunnelInfo.tunnelId, dnsId: tunnelInfo.dnsId }
-            });
-            console.log(chalk.green('   ✔ Subdomain released.'));
-          } catch (e) {
-            // Silent fail on cleanup is acceptable
+        let isCleaningUp = false;
+        const cleanup = async () => {
+          if (isCleaningUp) {
+            return;
           }
-        }
-        process.exit();
-      };
 
-      process.on('SIGINT', cleanup);
-      process.on('SIGTERM', cleanup);
+          isCleaningUp = true;
+          removeSignalHandler('SIGINT', cleanup);
+          removeSignalHandler('SIGTERM', cleanup);
+          console.log(chalk.yellow('\n\n   Cleaning up connection...'));
+          tunnelProcess.kill();
 
-    } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message;
-      spinner.fail(chalk.red('Connection failed'));
-      console.log(chalk.gray(`   Reason: ${errorMsg}`));
-      process.exit(1);
-    }
-  });
+          if (tunnelInfo) {
+            try {
+              await httpClient.delete(`${backendUrl}/cleanup`, {
+                data: {
+                  tunnelId: tunnelInfo.tunnelId,
+                  dnsId: tunnelInfo.dnsId,
+                  sessionId: tunnelInfo.sessionId
+                }
+              });
+              console.log(chalk.green('   ✔ Subdomain released.'));
+            } catch {
+              // Silent fail on cleanup is acceptable
+            }
+          }
+          exitProcess();
+        };
 
-program.parse();
+        registerSignalHandler('SIGINT', cleanup);
+        registerSignalHandler('SIGTERM', cleanup);
+      } catch (err) {
+        const errorMsg = err.response?.data?.error || err.message;
+        spinner.fail(chalk.red('Connection failed'));
+        console.log(chalk.gray(`   Reason: ${errorMsg}`));
+        exitProcess(1);
+      }
+    });
+}
+
+export async function runCli(argv = process.argv, dependencies = {}) {
+  const cli = createProgram(dependencies);
+  await cli.parseAsync(argv);
+}
+
+const isDirectExecution = process.argv[1]
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectExecution) {
+  await runCli(process.argv);
+}

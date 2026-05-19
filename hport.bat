@@ -5,9 +5,30 @@ title H-PORT Launcher
 :: Change to script directory, supports spaces in path
 cd /d "%~dp0"
 
+:: Prefer built artifact, fall back to source when running from repo
+set "HPORT_EXEC=%~dp0dist\index.js"
+if not exist "!HPORT_EXEC!" set "HPORT_EXEC=%~dp0index.js"
+
+if "%~1"=="--help" (
+    node "!HPORT_EXEC!" --help
+    goto :EOF
+)
+if "%~1"=="-h" (
+    node "!HPORT_EXEC!" -h
+    goto :EOF
+)
+if "%~1"=="--version" (
+    node "!HPORT_EXEC!" --version
+    goto :EOF
+)
+if "%~1"=="-V" (
+    node "!HPORT_EXEC!" -V
+    goto :EOF
+)
+
 cls
 echo ------------------------------------------------
-echo         H-PORT LAUNCHER - HCU-LAB.ME
+echo        H-PORT LAUNCHER - CLOUDFLARE
 echo ------------------------------------------------
 echo.
 
@@ -35,8 +56,7 @@ echo.
 echo [!] Connecting to H-Lab Edge...
 echo.
 
-:: Run node with dist/index.js (Quotes protect paths with spaces)
-node "%~dp0dist\index.js" !TARGET! !SUB_ARG!
+node "!HPORT_EXEC!" !TARGET! !SUB_ARG!
 
 if %errorlevel% neq 0 (
     echo.

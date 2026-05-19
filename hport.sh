@@ -6,6 +6,17 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 HPORT_EXEC="$DIR/dist/index.js"
 
+if [ ! -f "$HPORT_EXEC" ]; then
+    HPORT_EXEC="$DIR/index.js"
+fi
+
+case "$1" in
+    --help|-h|--version|-V)
+        node "$HPORT_EXEC" "$1"
+        exit $?
+        ;;
+esac
+
 green() { echo -e "\033[32m$1\033[0m"; }
 red() { echo -e "\033[31m$1\033[0m"; }
 yellow() { echo -e "\033[33m$1\033[0m"; }
@@ -16,7 +27,7 @@ trap "echo -e '\n\n🛑 Script stopped.'; exit 0" SIGINT
 
 clear
 echo "╭────────────────────────────────────────────────────────╮"
-echo "│         H - P O R T   L A U N C H E R  🚀              │"
+echo "│         H - P O R T   L A U N C H E R                  │"
 echo "╰────────────────────────────────────────────────────────╯"
 echo ""
 

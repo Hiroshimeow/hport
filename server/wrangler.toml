@@ -1,9 +1,14 @@
-name = "hport-api"
+name = "h-lab-api"
 main = "index.js"
 compatibility_date = "2024-01-19"
 
 [vars]
-# Environment variables (Fill in your real IDs or configure via Dashboard)
-CF_ACCOUNT_ID = ""
-CF_ZONE_ID = ""
+# Environment variables (fill with your real values or configure via Dashboard)
+CF_ACCOUNT_ID = "41bc083e9dc3570615f61150095d6d7f"
+CF_ZONE_ID = "cedf108fb0e5ce49ca6e21023975f4aa"
+PUBLIC_BASE_DOMAIN = "hcu-lab.me"
+PROTECTED_SUBDOMAINS = "api,api2,mcp,clawder,qmh,memos,www,admin,auth,mail,smtp,imap,pop,ftp,ssh"
 # CF_API_TOKEN should be set as a Secret (See GUIDE.md)
+
+[triggers]
+crons = ["0 0 */2 * *"]
