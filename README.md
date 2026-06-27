@@ -11,6 +11,7 @@ For this repo, a typical flow is publishing `http://127.0.0.1:8101/mcp` to a hos
 - Cron cleanup for managed orphan resources.
 - Protected subdomains and unmanaged DNS overwrite protection.
 - Default transport is `http2`, which is safer on networks where QUIC/UDP is blocked.
+- H-PORT runs `cloudflared` with an empty config file, so old rules in `~/.cloudflared/config.yml` cannot silently break MCP metadata routes.
 
 ## Installation
 
@@ -150,6 +151,10 @@ Manual management endpoints:
 - `1.1.1`
 - Default `cloudflared` transport changed to `http2` for better compatibility on networks where QUIC fails.
 - README now documents when `npm install -g` is required and when it is not.
+
+- `1.1.2`
+- `cloudflared` is now started with an empty config path (`NUL` on Windows, `/dev/null` on Unix).
+- This prevents existing user-level Cloudflare Tunnel ingress rules from hijacking H-PORT sessions and breaking `/.well-known/*` MCP auth metadata routes.
 
 ## License
 ISC

@@ -155,6 +155,7 @@ test('CLI success flow starts cloudflared and cleans up on SIGINT', async () => 
   const spawnEvent = events.find((event) => event.type === 'spawn');
   assert.ok(spawnEvent);
   assert.deepEqual(spawnEvent.args, [
+    '--config', process.platform === 'win32' ? 'NUL' : '/dev/null',
     'tunnel', 'run', '--protocol', 'http2', '--token', 'token-123', '--url', 'http://127.0.0.1:8080'
   ]);
   assert.deepEqual(cleanupPayload, {
@@ -264,6 +265,7 @@ test('CLI background flow detaches cloudflared and exits without signal handlers
   const spawnEvent = events.find((event) => event.type === 'spawn');
   assert.ok(spawnEvent);
   assert.deepEqual(spawnEvent.args, [
+    '--config', process.platform === 'win32' ? 'NUL' : '/dev/null',
     'tunnel', 'run', '--protocol', 'http2', '--token', 'token-123', '--url', 'http://127.0.0.1:8080'
   ]);
   assert.deepEqual(spawnEvent.options, { detached: true, stdio: ['ignore', 'pipe', 'pipe'] });

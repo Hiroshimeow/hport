@@ -9,9 +9,10 @@ import axios from 'axios';
 import { pathToFileURL } from 'url';
 
 export const BACKEND_URL = process.env.HPORT_BACKEND_URL || 'https://h-lab-api.haiduong8592.workers.dev';
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 export const DNS_EXISTS_CODE = 'DNS_EXISTS';
 export const CLOUDFLARED_PROTOCOL = process.env.HPORT_CLOUDFLARED_PROTOCOL?.trim() || 'http2';
+export const CLOUDFLARED_NULL_CONFIG_PATH = process.platform === 'win32' ? 'NUL' : '/dev/null';
 const DISPLAY_DOMAIN = process.env.HPORT_PUBLIC_BASE_DOMAIN?.trim() || 'Cloudflare Tunnel';
 const BANNER_VERSION = `v${VERSION}`.padEnd(50);
 
@@ -190,6 +191,7 @@ export function createProgram({
           ? { detached: true, stdio: ['ignore', 'pipe', 'pipe'] }
           : undefined;
         const tunnelProcess = spawnProcess('cloudflared', [
+          '--config', CLOUDFLARED_NULL_CONFIG_PATH,
           'tunnel', 'run', '--protocol', CLOUDFLARED_PROTOCOL, '--token', tunnelInfo.token, '--url', `http://${finalTarget}`
         ], spawnOptions);
 
