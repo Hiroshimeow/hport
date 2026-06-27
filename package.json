@@ -1,6 +1,6 @@
 {
   "name": "hport-tunnel",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Securely expose localhost to the internet via H-Lab Cloud Edge",
   "type": "module",
   "main": "dist/index.js",
