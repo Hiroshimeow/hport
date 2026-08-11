@@ -15,9 +15,9 @@ For this repo, a typical flow is publishing `http://127.0.0.1:8101/mcp` to a hos
 
 ## Installation
 
-### 1. Prerequisite
-Install `cloudflared` first:
-- [Download & Install cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/setup/)
+### 1. Prerequisites
+- Node.js 20 or newer.
+- Install `cloudflared`: [Download & Install cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/setup/)
 
 ### 2. Install the CLI globally
 ```bash
@@ -43,11 +43,17 @@ To update to the newest published package:
 npm install -g hport-tunnel@latest
 ```
 
-If you are working from this repo before publishing, run the local CLI with:
+If you are working from a source clone before publishing, install and link it with:
 
 ```bash
-node .\bin.js 8101 -s mcp-thinkbook --bg
+git clone https://github.com/Hiroshimeow/hport.git
+cd hport
+npm ci
+npm link
+hport --help
 ```
+
+`npm ci` builds the CLI bundle automatically; no separate `npm run build` step is required.
 
 ## Usage
 

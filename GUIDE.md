@@ -24,20 +24,22 @@ npm run deploy
 
 ## 2. Client
 
-Build CLI bundle:
-```bash
-npm run build
-```
+Requirements:
+- Node.js 20 or newer.
+- `cloudflared` available in `PATH`.
 
-Install globally:
+Install the published CLI globally:
 ```bash
 npm install -g hport-tunnel
 ```
 
-Or relink locally while developing:
+For a source clone, install and link locally:
 ```bash
+npm ci
 npm link
 ```
+
+`npm ci` runs the package build automatically; no separate manual build step is required.
 
 ## 3. Runtime Model
 
