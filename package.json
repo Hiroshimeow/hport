@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "ncc build index.js -o dist --minify",
+    "prepare": "npm run build",
     "test": "node --test"
   },
   "keywords": [
@@ -19,6 +20,9 @@
   ],
   "author": "H-Lab",
   "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
   "files": [
     "bin.js",
     "dist/",
